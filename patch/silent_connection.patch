@@ -1,8 +1,6 @@
-diff --git a/src/server/connection.rs b/src/server/connection.rs
-index e9ea313..208fa28 100644
---- a/src/server/connection.rs
-+++ b/src/server/connection.rs
-@@ -3066,7 +3066,7 @@ impl Connection {
+--- src/server/connection.rs.bak	2026-10-29 11:20:26.112402643 +0800
++++ src/server/connection.rs	2026-10-29 11:46:56.814708961 +0800
+@@ -3066,7 +3066,7 @@
                  if !self.send_logon_response_and_keep_alive().await {
                      return false;
                  }
@@ -11,7 +9,7 @@ index e9ea313..208fa28 100644
              } else if lr.password.is_empty() {
                  #[cfg(not(any(target_os = "android", target_os = "ios")))]
                  if should_use_terminal_os_login_scope(self.terminal, &lr.os_login.username) {
-@@ -3095,7 +3095,7 @@ impl Connection {
+@@ -3095,7 +3095,7 @@
                      if !self.send_logon_response_and_keep_alive().await {
                          return false;
                      }
@@ -20,7 +18,7 @@ index e9ea313..208fa28 100644
                  }
              }
          } else if let Some(message::Union::Auth2fa(tfa)) = msg.union {
-@@ -3121,11 +3121,7 @@ impl Connection {
+@@ -3121,11 +3121,7 @@
                          if !self.send_logon_response_and_keep_alive().await {
                              return false;
                          }
@@ -33,7 +31,7 @@ index e9ea313..208fa28 100644
                      } else {
                          self.update_failure(failure, false, 1);
                          self.send_login_error(crate::client::LOGIN_MSG_2FA_WRONG)
-@@ -3181,11 +3177,7 @@ impl Connection {
+@@ -3181,11 +3177,7 @@
                              if !self.send_logon_response_and_keep_alive().await {
                                  return false;
                              }
