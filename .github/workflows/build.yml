@@ -48,7 +48,7 @@ jobs:
 
       - name: Generate bridge
         run: |
-          flutter pub get
+          cd flutter && flutter pub get && cd ..
           cargo install cargo-expand --version 1.0.95 --locked
           ~/.cargo/bin/flutter_rust_bridge_codegen \
             --rust-input ./src/flutter_ffi.rs \
