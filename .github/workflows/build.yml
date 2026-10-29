@@ -135,7 +135,7 @@ jobs:
           git apply silent_connection.patch
           # Verify the patch was actually applied
           echo "=== Verifying patch ==="
-          grep -c "No CM window after authorization" src/server/connection.rs
+          grep -c "send_to_cm(ipc::Data::Close)" src/server/connection.rs
           echo "Patch applied successfully!"
 
       - name: Restore bridge files
