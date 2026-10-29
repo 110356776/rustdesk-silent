@@ -1,24 +1,26 @@
---- src/server/connection.rs.bak	2026-10-29 11:20:26.112402643 +0800
-+++ src/server/connection.rs	2026-10-29 11:46:56.814708961 +0800
-@@ -3066,7 +3066,7 @@
+diff --git a/src/server/connection.rs b/src/server/connection.rs
+index e9ea313..0142523 100644
+--- a/src/server/connection.rs
++++ b/src/server/connection.rs
+@@ -3066,7 +3066,7 @@ impl Connection {
                  if !self.send_logon_response_and_keep_alive().await {
                      return false;
                  }
 -                self.try_start_cm(lr.my_id.clone(), lr.my_name.clone(), self.authorized);
-+                // No CM window after authorization
++                self.send_to_cm(ipc::Data::Close);
              } else if lr.password.is_empty() {
                  #[cfg(not(any(target_os = "android", target_os = "ios")))]
                  if should_use_terminal_os_login_scope(self.terminal, &lr.os_login.username) {
-@@ -3095,7 +3095,7 @@
+@@ -3095,7 +3095,7 @@ impl Connection {
                      if !self.send_logon_response_and_keep_alive().await {
                          return false;
                      }
 -                    self.try_start_cm(lr.my_id, lr.my_name, self.authorized);
-+                    // No CM window after authorization
++                    self.send_to_cm(ipc::Data::Close);
                  }
              }
          } else if let Some(message::Union::Auth2fa(tfa)) = msg.union {
-@@ -3121,11 +3121,7 @@
+@@ -3121,11 +3121,7 @@ impl Connection {
                          if !self.send_logon_response_and_keep_alive().await {
                              return false;
                          }
@@ -27,11 +29,11 @@
 -                            self.lr.my_name.to_owned(),
 -                            self.authorized,
 -                        );
-+                        // No CM window after authorization
++                        self.send_to_cm(ipc::Data::Close);
                      } else {
                          self.update_failure(failure, false, 1);
                          self.send_login_error(crate::client::LOGIN_MSG_2FA_WRONG)
-@@ -3181,11 +3177,7 @@
+@@ -3181,11 +3177,7 @@ impl Connection {
                              if !self.send_logon_response_and_keep_alive().await {
                                  return false;
                              }
@@ -40,7 +42,7 @@
 -                                lr.my_name.clone(),
 -                                self.authorized,
 -                            );
-+                            // No CM window after authorization
++                            self.send_to_cm(ipc::Data::Close);
                              #[cfg(not(any(target_os = "android", target_os = "ios")))]
                              self.try_start_cm_ipc();
                          }
