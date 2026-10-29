@@ -10,6 +10,7 @@ env:
   FLUTTER_VERSION: "3.24.5"
   LLVM_VERSION: "15.0.6"
   FLUTTER_RUST_BRIDGE_VERSION: "1.80.1"
+  CARGO_EXPAND_VERSION: "1.0.95"
   VCPKG_COMMIT_ID: "9e593bb18ea69cc5095e012465dcd675a822ed0d"
   VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
@@ -27,44 +28,50 @@ jobs:
 
       - name: Install prerequisites
         run: |
+          sudo apt-get install ca-certificates -y
           sudo apt-get update -y
           sudo apt-get install -y \
             clang cmake curl gcc git g++ libclang-dev libgtk-3-dev \
             llvm-dev nasm ninja-build pkg-config wget
 
-      - name: Install Rust
+      - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ env.RUST_VERSION }}
+          components: "rustfmt"
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
           flutter-version: "3.22.3"
+          cache: true
 
-      - name: Install flutter_rust_bridge_codegen
-        run: cargo install flutter_rust_bridge_codegen --version ${{ env.FLUTTER_RUST_BRIDGE_VERSION }} --locked
-
-      - name: Generate bridge
+      - name: Install flutter rust bridge deps
+        shell: bash
         run: |
-          cd flutter && flutter pub get && cd ..
-          cargo install cargo-expand --version 1.0.95 --locked
-          ~/.cargo/bin/flutter_rust_bridge_codegen \
-            --rust-input ./src/flutter_ffi.rs \
-            --dart-output ./flutter/lib/generated_bridge.g.dart \
-            --c-output ./flutter/ffi.h \
-            --rust-output ./src/ffi.rs
+          cargo install cargo-expand --version ${{ env.CARGO_EXPAND_VERSION }} --locked
+          cargo install flutter_rust_bridge_codegen --version ${{ env.FLUTTER_RUST_BRIDGE_VERSION }} --features "uuid" --locked
+          # Flutter 3.22.3: extended_text 14 needs a newer Dart, so downgrade for resolution.
+          sed -i -e 's/extended_text: 14.0.0/extended_text: 13.0.0/g' flutter/pubspec.yaml
+          pushd flutter && flutter pub get && popd
+
+      - name: Run flutter rust bridge
+        run: |
+          ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart --c-output ./flutter/macos/Runner/bridge_generated.h
+          cp ./flutter/macos/Runner/bridge_generated.h ./flutter/ios/Runner/bridge_generated.h
 
       - name: Upload bridge artifacts
         uses: actions/upload-artifact@v4
         with:
           name: bridge-artifact
           path: |
-            flutter/lib/generated_bridge.g.dart
-            flutter/lib/generated_bridge.freezed.dart
-            flutter/ffi.h
-            src/ffi.rs
+            ./src/bridge_generated.rs
+            ./src/bridge_generated.io.rs
+            ./flutter/lib/generated_bridge.dart
+            ./flutter/lib/generated_bridge.freezed.dart
+            ./flutter/macos/Runner/bridge_generated.h
+            ./flutter/ios/Runner/bridge_generated.h
 
   # Job 2: Build RustDeskTempTopMostWindow (runs on Windows)
   build-topmost-window:
