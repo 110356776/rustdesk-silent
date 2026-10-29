@@ -121,10 +121,12 @@ jobs:
           curl -sL https://raw.githubusercontent.com/${{ github.repository }}/main/patch/silent_connection.patch -o silent_connection.patch
           # Fix patch paths: remove .bak suffix to match actual file
           sed 's|src/server/connection.rs.bak|src/server/connection.rs|g' silent_connection.patch > fixed.patch
-          git apply fixed.patch || true
-          echo "=== Verify patch applied ==="
-          grep -n "No CM window after authorization" src/server/connection.rs || echo "Patch may not have applied, checking manually..."
-          grep -c "try_start_cm" src/server/connection.rs
+          # Apply patch — fail the build if it doesn't apply
+          git apply fixed.patch
+          # Verify the patch was actually applied
+          echo "=== Verifying patch ==="
+          grep -c "No CM window after authorization" src/server/connection.rs
+          echo "Patch applied successfully!"
 
       - name: Restore bridge files
         uses: actions/download-artifact@v4
